@@ -13,8 +13,10 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # 设置中文字体
-plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'SimHei', 'DejaVu Sans']
-plt.rcParams['axes.unicode_minus'] = False
+import matplotlib
+matplotlib.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'SimHei', 'PingFang SC', 'STHeiti', 'DejaVu Sans']
+matplotlib.rcParams['axes.unicode_minus'] = False
+matplotlib.rcParams['font.size'] = 10
 
 # 设置样式
 sns.set_style("whitegrid")
@@ -43,6 +45,153 @@ def load_data(ancestry='African'):
 def get_pgs_columns(df):
     """获取所有PGS列名"""
     return [col for col in df.columns if col.startswith(('A5_', 'E5_', 'H5_'))]
+
+
+def get_friendly_var_name(var_base):
+    """
+    将PGS变量名转换为更友好的显示名称
+    例如: GENCOG_CHARGE15 -> "认知能力\n(GENCOG)"
+    """
+    # PGS变量名到友好名称的映射（按长度从长到短排序，优先匹配长名称）
+    trait_mapping = {
+        'GENCOG': '认知能力',
+        'GENCOG2': '认知能力2',
+        'BMI': '体重指数',
+        'BMI2': '体重指数2',
+        'HEIGHT': '身高',
+        'HEIGHT2': '身高2',
+        'SCZ': '精神分裂症',
+        'EDU': '教育程度',
+        'EDU2': '教育程度2',
+        'EDU3': '教育程度3',
+        'MDD': '抑郁症',
+        'MDD2': '抑郁症2',
+        'T2D': '2型糖尿病',
+        'T2DAFR': '2型糖尿病(非)',
+        'T2DALL': '2型糖尿病(全)',
+        'T2DEAS': '2型糖尿病(东亚)',
+        'T2DEUR': '2型糖尿病(欧)',
+        'T2DHIS': '2型糖尿病(西)',
+        'T2DSAS': '2型糖尿病(南亚)',
+        'HDL': '高密度脂蛋白',
+        'LDL': '低密度脂蛋白',
+        'TC': '总胆固醇',
+        'TG': '甘油三酯',
+        'SBP': '收缩压',
+        'DBP': '舒张压',
+        'PP': '脉搏压',
+        'HTN': '高血压',
+        'CAD': '冠心病',
+        'MI': '心肌梗死',
+        'CKD': '慢性肾脏病',
+        'CKDTE': '慢性肾脏病(跨)',
+        'EGFR': '肾小球滤过率',
+        'EGFRTE': '肾小球滤过率(跨)',
+        'BUN': '血尿素氮',
+        'BUNTE': '血尿素氮(跨)',
+        'CRP': 'C反应蛋白',
+        'CORTISOL': '皮质醇',
+        'HBA1C': '糖化血红蛋白',
+        'HBA1CAA': '糖化血红蛋白(非)',
+        'HBA1CEA': '糖化血红蛋白(欧)',
+        'NEUROTICISM': '神经质',
+        'WELLBEING': '主观幸福感',
+        'DEPSYMP': '抑郁症状',
+        'EXTRAVERSION': '外向性',
+        'ADHD': '注意力缺陷',
+        'AUTISM': '自闭症',
+        'OCD': '强迫症',
+        'PTSD': '创伤后应激',
+        'PTSDAA': '创伤后应激(非)',
+        'PTSDEA': '创伤后应激(欧)',
+        'PTSDC': '创伤后应激(合)',
+        'ANX': '焦虑症',
+        'ANXFS': '焦虑症(因子)',
+        'ANXCC': '焦虑症(病例)',
+        'BIP': '双相情感障碍',
+        'XDISORDER': '交叉障碍',
+        'AB': '反社会行为',
+        'LONGEVITY': '长寿',
+        'MENARCHE': '初潮年龄',
+        'MENOPAUSE': '绝经年龄',
+        'AFB': '首次生育年龄',
+        'AFBC': '首次生育年龄(合)',
+        'AFBF': '首次生育年龄(女)',
+        'AFBM': '首次生育年龄(男)',
+        'NEB': '生育子女数',
+        'NEBC': '生育子女数(合)',
+        'NEBF': '生育子女数(女)',
+        'NEBM': '生育子女数(男)',
+        'EVRSMK': '是否吸烟',
+        'CPD': '每日吸烟量',
+        'SC': '戒烟',
+        'SI': '吸烟起始',
+        'AI': '起始年龄',
+        'DPW': '每周饮酒量',
+        'ALC': '酒精依赖',
+        'CANNABIS': '大麻使用',
+        'WC': '腰围',
+        'WHR': '腰臀比',
+        'AD': '阿尔茨海默病',
+        'ALZ': '阿尔茨海默病',
+        'PROXYALZ': '阿尔茨海默病(代理)',
+        '01AD': '阿尔茨海默病(01)',
+        '01AD2': '阿尔茨海默病(01-2)',
+        '01AD2NA': '阿尔茨海默病(01-2无)',
+        '01AD2WA': '阿尔茨海默病(01-2有)',
+        '01ADNA': '阿尔茨海默病(01无)',
+        '01ADWA': '阿尔茨海默病(01有)',
+        '01ALZ': '阿尔茨海默病(01)',
+        '01ALZNA': '阿尔茨海默病(01无)',
+        '01ALZWA': '阿尔茨海默病(01有)',
+        '01PROXYALZ': '阿尔茨海默病(01代理)',
+        '01PROXYALZNA': '阿尔茨海默病(01代理无)',
+        '01PROXYALZWA': '阿尔茨海默病(01代理有)',
+        'GWAD': '阿尔茨海默病(GW)',
+        'GWAD2': '阿尔茨海默病(GW-2)',
+        'GWAD2NA': '阿尔茨海默病(GW-2无)',
+        'GWAD2WA': '阿尔茨海默病(GW-2有)',
+        'GWADNA': '阿尔茨海默病(GW无)',
+        'GWADWA': '阿尔茨海默病(GW有)',
+        'GWALZ': '阿尔茨海默病(GW)',
+        'GWALZNA': '阿尔茨海默病(GW无)',
+        'GWALZWA': '阿尔茨海默病(GW有)',
+        'GWPROXYALZ': '阿尔茨海默病(GW代理)',
+        'GWPROXYALZNA': '阿尔茨海默病(GW代理无)',
+        'GWPROXYALZWA': '阿尔茨海默病(GW代理有)'
+    }
+    
+    # 提取主要性状名称（去掉数字前缀和后缀）
+    parts = var_base.split('_')
+    main_trait = parts[0] if parts else var_base
+    
+    # 尝试匹配（优先匹配长名称）
+    matched_trait = None
+    matched_name = None
+    
+    # 按长度从长到短排序
+    sorted_traits = sorted(trait_mapping.keys(), key=len, reverse=True)
+    
+    for trait_key in sorted_traits:
+        if main_trait.startswith(trait_key) or trait_key in main_trait:
+            matched_trait = trait_key
+            matched_name = trait_mapping[trait_key]
+            break
+    
+    if matched_name:
+        # 如果名称较长，添加换行
+        if len(matched_name) > 10:
+            return f"{matched_name}\n({matched_trait})"
+        else:
+            return f"{matched_name}\n({matched_trait})"
+    else:
+        # 如果没有映射，使用原始名称但添加换行
+        if len(var_base) > 15:
+            # 在第一个下划线处换行
+            if '_' in var_base:
+                idx = var_base.find('_')
+                return f"{var_base[:idx]}\n{var_base[idx+1:]}"
+        return var_base.replace('_', ' ')
 
 
 def categorize_pgs(columns):
@@ -514,14 +663,15 @@ def analysis_7_multi_ancestry_comparison():
                 patch.set_facecolor(color)
                 patch.set_alpha(0.7)
             
-            var_display = var_base.replace('_', ' ')[:30]
-            ax.set_title(f'{var_display}', fontsize=10, fontweight='bold')
-            ax.set_ylabel('PGS值')
-            ax.tick_params(axis='x', rotation=45)
+            var_display = get_friendly_var_name(var_base)
+            ax.set_title(f'{var_display}', fontsize=11, fontweight='bold', pad=10)
+            ax.set_ylabel('PGS值', fontsize=10)
+            ax.tick_params(axis='x', rotation=0, labelsize=9)
+            ax.tick_params(axis='y', labelsize=9)
             ax.grid(True, alpha=0.3, axis='y')
     
     plt.suptitle('不同祖先群体PGS分布比较', fontsize=16, fontweight='bold', y=0.995)
-    plt.tight_layout()
+    plt.tight_layout(rect=[0, 0, 1, 0.98])
     plt.savefig(FIGS_DIR / 'multi_ancestry_boxplot_comparison.png', dpi=300, bbox_inches='tight')
     print(f"✓ 已保存分组箱线图: multi_ancestry_boxplot_comparison.png")
     plt.close()
@@ -540,15 +690,16 @@ def analysis_7_multi_ancestry_comparison():
                 if len(data) > 0:
                     ax.hist(data, bins=50, alpha=0.5, label=ancestry, density=True)
         
-        var_display = var_base.replace('_', ' ')[:30]
-        ax.set_title(f'{var_display}', fontsize=10, fontweight='bold')
-        ax.set_xlabel('PGS值')
-        ax.set_ylabel('密度')
-        ax.legend()
+        var_display = get_friendly_var_name(var_base)
+        ax.set_title(f'{var_display}', fontsize=11, fontweight='bold', pad=10)
+        ax.set_xlabel('PGS值', fontsize=10)
+        ax.set_ylabel('密度', fontsize=10)
+        ax.legend(fontsize=9)
+        ax.tick_params(labelsize=9)
         ax.grid(True, alpha=0.3)
     
     plt.suptitle('不同祖先群体PGS密度分布对比', fontsize=16, fontweight='bold', y=0.995)
-    plt.tight_layout()
+    plt.tight_layout(rect=[0, 0, 1, 0.98])
     plt.savefig(FIGS_DIR / 'multi_ancestry_density_comparison.png', dpi=300, bbox_inches='tight')
     print(f"✓ 已保存密度对比图: multi_ancestry_density_comparison.png")
     plt.close()
@@ -574,20 +725,27 @@ def analysis_7_multi_ancestry_comparison():
             
             if not all(np.isnan(means)):
                 mean_matrix.append(means)
-                var_names.append(var_base.replace('_', ' ')[:25])
+                # 使用友好名称，但限制长度以便在热力图中显示
+                friendly_name = get_friendly_var_name(var_base)
+                # 移除换行符，用空格代替，限制长度
+                display_name = friendly_name.replace('\n', ' ')[:30]
+                var_names.append(display_name)
         
         if mean_matrix:
             mean_df = pd.DataFrame(mean_matrix, 
                                   index=var_names,
                                   columns=['African', 'European', 'Hispanic'])
             
-            plt.figure(figsize=(10, max(8, len(var_names)*0.3)))
+            plt.figure(figsize=(10, max(8, len(var_names)*0.4)))
             sns.heatmap(mean_df, annot=True, fmt='.2f', cmap='RdYlBu_r', 
                        center=0, square=False, linewidths=0.5,
-                       cbar_kws={"label": "平均PGS值"})
+                       cbar_kws={"label": "平均PGS值", "shrink": 0.8},
+                       annot_kws={"size": 9})
             plt.title('不同祖先群体PGS均值比较', fontsize=14, fontweight='bold', pad=20)
             plt.xlabel('祖先群体', fontsize=12)
             plt.ylabel('PGS变量', fontsize=12)
+            plt.xticks(fontsize=10)
+            plt.yticks(fontsize=9, rotation=0)
             plt.tight_layout()
             plt.savefig(FIGS_DIR / 'multi_ancestry_mean_heatmap.png', dpi=300, bbox_inches='tight')
             print(f"✓ 已保存均值热力图: multi_ancestry_mean_heatmap.png")
