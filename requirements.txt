@@ -1,0 +1,23 @@
+# HRS 多基因评分数据集 Python 依赖包
+
+# 必需包
+pandas>=1.3.0
+numpy>=1.20.0
+
+# 可选包（用于读取 SPSS 和 SAS 文件）
+# 如果只需要读取 .dta 文件，可以不安装
+pyreadstat>=1.1.0
+
+# 可选包（用于统计分析）
+scipy>=1.7.0
+scikit-learn>=1.0.0
+statsmodels>=0.13.0
+
+# 可选包（用于可视化）
+matplotlib>=3.4.0
+seaborn>=0.11.0
+
+# 可选包（用于保存为其他格式）
+pyarrow>=5.0.0  # 用于 Parquet 格式
+openpyxl>=3.0.0  # 用于 Excel 格式
+
